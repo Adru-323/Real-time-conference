@@ -3,7 +3,8 @@ import Register from './pages/Register.jsx';
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import Dashboard from './pages/Dashboard.jsx';
-import Chat from "./pages/Chat";
+import Chat from "./pages/chat.jsx";
+
 
 
 function App() {
