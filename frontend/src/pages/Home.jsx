@@ -6,18 +6,22 @@ import { socket } from "../socket";
 
 function Home() {
   const navigate = useNavigate();
-
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
-  useEffect(() => {
-    axios.get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, { withCredentials: true })
-      .then(() => setIsLoggedIn(true))
-      .catch(() => setIsLoggedIn(false));
-  }, []);
+useEffect(() => {
+  axios
+    .get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
+      withCredentials: true,
+    })
+    .then(() => setIsLoggedIn(true))
+    .catch(() => setIsLoggedIn(false))
+    .finally(() => setCheckingAuth(false));
+}, []);
 
   const handleLogout = async () => {
     setLoggingOut(true);
