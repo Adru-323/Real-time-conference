@@ -70,6 +70,14 @@ useEffect(() => {
     }
   };
 
+  if (checkingAuth) {
+  return (
+    <div className="container mt-5">
+      Checking login...
+    </div>
+  );
+}
+
   return (
     <div className="container mt-5 py-5">
       <div className="row justify-content-center">
