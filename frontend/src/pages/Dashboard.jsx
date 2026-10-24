@@ -12,7 +12,7 @@ function Dashboard() {
         const fetchUser = async () => {
             try {
                 const response = await axios.get(
-                     `${import.meta.env.VITE_API_URL}/api/auth/profile`,
+                    `${import.meta.env.VITE_API_URL}/api/auth/profile`,
                     { withCredentials: true }
                 );
 
@@ -33,7 +33,7 @@ function Dashboard() {
     const handleLogout = async () => {
         try {
             await axios.post(
-                  `${import.meta.env.VITE_API_URL}/api/auth/logout`,
+                `${import.meta.env.VITE_API_URL}/api/auth/logout`,
                 {},
                 { withCredentials: true }
             );
@@ -94,18 +94,14 @@ function Dashboard() {
                                 <label className="form-label text-secondary">
                                     Username
                                 </label>
-                                <p className="fw-semibold">
-                                    {user.username}
-                                </p>
+                                <p className="fw-semibold">{user.username}</p>
                             </div>
 
                             <div className="mb-3">
                                 <label className="form-label text-secondary">
                                     Email Address
                                 </label>
-                                <p className="fw-semibold">
-                                    {user.email}
-                                </p>
+                                <p className="fw-semibold">{user.email}</p>
                             </div>
 
                             <button
