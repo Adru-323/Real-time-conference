@@ -23,8 +23,8 @@ const Register =async (req,res)=> {
 
             res.cookie("token",token ,{
                 httpOnly:true,
-                secure: false, // true in production https
-                sameSite: "lax",
+                secure: true, // true in production https
+                sameSite: "none",
                 path: "/",
                 maxAge: 24 * 60 * 60 * 1000,
             })
@@ -91,8 +91,8 @@ const Login = async(req,res) => {
 const Logout = (req, res) => {
     res.clearCookie("token", {
         httpOnly: true,
-        secure: false,
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
         path: "/",
     });
 
