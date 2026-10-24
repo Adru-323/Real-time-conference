@@ -4,6 +4,7 @@ const { getProfile } = require("../controllers/getProfile.js");
 const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware.js");
 const searchUser = require("../controllers/searchUser.js");
+const userModel = require("../models/userModel.js");
 
  
 router.post("/register",Register);
