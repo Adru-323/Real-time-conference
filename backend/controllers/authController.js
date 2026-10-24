@@ -109,7 +109,7 @@
 
 const userModel = require("../models/userModel.js");
 const bcryptjs = require("bcryptjs");
-const generateToken = require("../utils/generateToken.js");
+const generateToken = require("../utiles/generateToken.js");
 
 const isProd = process.env.NODE_ENV === "production";
 
