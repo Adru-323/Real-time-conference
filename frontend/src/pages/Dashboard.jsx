@@ -12,7 +12,7 @@ function Dashboard() {
         const fetchUser = async () => {
             try {
                 const response = await axios.get(
-                    "http://localhost:8080/api/auth/profile",
+                     `${import.meta.env.VITE_API_URL}/api/auth/profile`,
                     { withCredentials: true }
                 );
 
