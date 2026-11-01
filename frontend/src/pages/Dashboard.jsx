@@ -1,20 +1,19 @@
 
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState } from "react";
+import api from "../api";
+import { useAuth } from "../authContext.js";
 import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
+    const { logout } = useAuth();
 
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const response = await axios.get(
-                    `${import.meta.env.VITE_API_URL}/api/auth/profile`,
-                    { withCredentials: true }
-                );
+                const response = await api.get("/api/auth/profile");
 
                 setUser(response.data.user);
             } catch (error) {
@@ -32,17 +31,13 @@ function Dashboard() {
 
     const handleLogout = async () => {
         try {
-            await axios.post(
-                `${import.meta.env.VITE_API_URL}/api/auth/logout`,
-                {},
-                { withCredentials: true }
-            );
-
-            navigate("/login");
+            await logout();
+            navigate("/", { replace: true });
         } catch (error) {
             console.error(
                 error.response?.data?.message || error.message
             );
+            navigate("/", { replace: true });
         }
     };
 

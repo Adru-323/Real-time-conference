@@ -156,7 +156,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import axios from "axios"; // <-- axios import karein
+import api from "../api";
+import { useAuth } from "../authContext.js";
 import { socket } from "../socket";
 import VideoCall from "../components/VideoCall.jsx";
 
@@ -164,7 +165,8 @@ function Chat({ currentUserId }) {
   const { receiverId } = useParams();
   const location = useLocation();
 
-  const myId = (currentUserId || localStorage.getItem("userId") || "").toString();
+  const { user } = useAuth();
+  const myId = (currentUserId || user?._id || "").toString();
 
   // State me pehle location.state check karega, agar nahi hai toh empty string
   const [receiverName, setReceiverName] = useState(location.state?.receiverName || "");
@@ -180,10 +182,8 @@ function Chat({ currentUserId }) {
   useEffect(() => {
     if (!receiverId) return;
 
-    axios
-      .get( `${import.meta.env.VITE_API_URL}/api/auth/user/${receiverId}`, {
-        withCredentials: true,
-      })
+    api
+      .get(`/api/auth/user/${receiverId}`)
       .then((res) => {
         if (res.data?.user?.username) {
           setReceiverName(res.data.user.username);
@@ -194,6 +194,41 @@ function Chat({ currentUserId }) {
       });
   }, [receiverId]);
 
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get(`/api/auth/messages/${receiverId}`)
+      .then((res) => {
+        if (active) {
+          const history = res.data.messages || [];
+          setMessages((current) => {
+            const byId = new Map(history.map((message) => [message._id, message]));
+            current.forEach((message) => {
+              const senderId = (message.sender?._id || message.sender)?.toString();
+              const receiverIdFromMessage = (message.receiver?._id || message.receiver)?.toString();
+              const belongsToConversation =
+                (senderId === myId && receiverIdFromMessage === receiverId) ||
+                (senderId === receiverId && receiverIdFromMessage === myId);
+              if (belongsToConversation) byId.set(message._id, message);
+            });
+            return [...byId.values()].sort(
+              (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+            );
+          });
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setError(err.response?.data?.message || "Could not load conversation history");
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [receiverId, myId]);
+
   // Naya message aane par auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -201,7 +236,7 @@ function Chat({ currentUserId }) {
 
   // Socket logic
   useEffect(() => {
-    setMessages([]);
+    if (!user) return undefined;
 
     const handleMessage = (message) => {
       const senderId = (message.sender?._id || message.sender)?.toString();
@@ -240,7 +275,7 @@ function Chat({ currentUserId }) {
       socket.off("connect", handleConnect);
       socket.off("disconnect", handleDisconnect);
     };
-  }, [receiverId]);
+  }, [receiverId, user]);
 
   const sendMessage = (e) => {
     e.preventDefault();
@@ -348,6 +383,8 @@ function Chat({ currentUserId }) {
           </form>
         </div>
       </div>
+
+      {error && <div className="alert alert-danger mt-3 mb-0">{error}</div>}
 
       {/* VideoCall Component */}
       <VideoCall

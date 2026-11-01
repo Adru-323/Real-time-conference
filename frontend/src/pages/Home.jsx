@@ -1,36 +1,23 @@
 
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { socket } from "../socket";
+import api from "../api";
+import { useAuth } from "../authContext.js";
 
 function Home() {
   const navigate = useNavigate();
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const { user, loading: checkingAuth, logout } = useAuth();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-
-useEffect(() => {
-  axios
-    .get(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
-      withCredentials: true,
-    })
-    .then(() => setIsLoggedIn(true))
-    .catch(() => setIsLoggedIn(false))
-    .finally(() => setCheckingAuth(false));
-}, []);
 
   const handleLogout = async () => {
     setLoggingOut(true);
     setError("");
     try {
-      await axios.post( `${import.meta.env.VITE_API_URL}/api/auth/logout`, {}, { withCredentials: true });
-      socket.disconnect();
-      setIsLoggedIn(false);
-      navigate("/login");
+      await logout();
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Unable to log out");
     } finally {
@@ -50,10 +37,9 @@ useEffect(() => {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-       `${import.meta.env.VITE_API_URL}/api/auth/search-user`,
+      const response = await api.post(
+       "/api/auth/search-user",
         { email: email.trim() },
-        { withCredentials: true }
       );
 
       const user = response.data.user;
@@ -89,7 +75,7 @@ useEffect(() => {
               </h2>
 
               <p className="text-muted text-center mb-4">
-                Find a user and start chatting
+                {user ? `Welcome back, ${user.username}. Find a user and start chatting.` : "Find a user and start chatting"}
               </p>
 
               <form onSubmit={handleSearch}>
@@ -127,26 +113,22 @@ useEffect(() => {
 
               <hr className="my-4" />
 
-              <p className="text-center text-muted mb-3">
-                Don't have an account or need to log in?
-              </p>
-
-              <div className="d-flex gap-3">
-                <button
-                  className="btn btn-outline-primary flex-fill"
-                  onClick={() => navigate("/login")}
-                >
-                  Login
-                </button>
-
-                <button
-                  className="btn btn-outline-success flex-fill"
-                  onClick={() => navigate("/register")}
-                >
-                  Register
-                </button>
-              </div>
-              {isLoggedIn && (
+              {!user && (
+                <>
+                  <p className="text-center text-muted mb-3">
+                    Don't have an account or need to log in?
+                  </p>
+                  <div className="d-flex gap-3">
+                    <button className="btn btn-outline-primary flex-fill" onClick={() => navigate("/login")}>
+                      Login
+                    </button>
+                    <button className="btn btn-outline-success flex-fill" onClick={() => navigate("/register")}>
+                      Register
+                    </button>
+                  </div>
+                </>
+              )}
+              {user && (
                 <button
                   className="btn btn-outline-danger w-100 mt-3"
                   onClick={handleLogout}

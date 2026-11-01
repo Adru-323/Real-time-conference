@@ -4,8 +4,12 @@ const generateToken = require("../utiles/generateToken.js");
 
 const Register =async (req,res)=> {
     try{
-        const {username , email , password } = req.body;
-        const existingUser = await userModel.findOne({email});
+        const { username, email, password } = req.body;
+        if (!username?.trim() || !email?.trim() || !password) {
+            return res.status(400).json({ success: false, message: "Username, email, and password are required" });
+        }
+        const normalizedEmail = email.trim().toLowerCase();
+        const existingUser = await userModel.findOne({ email: normalizedEmail });
 
         if(existingUser){
             return res.status(400).json({
@@ -15,8 +19,8 @@ const Register =async (req,res)=> {
         }
 
             const newUser = await userModel.create({
-                username,
-                email,
+                username: username.trim(),
+                email: normalizedEmail,
                 password
             });
             const token  =generateToken(newUser._id);
@@ -30,8 +34,10 @@ const Register =async (req,res)=> {
             })
 
 
-            res.status(200).json({
-                message:"User created successfully!"
+            res.status(201).json({
+                success: true,
+                message: "Registration successful",
+                token,
             });
     }catch (error) {
     console.error("Register error:", error);
@@ -46,18 +52,23 @@ const Register =async (req,res)=> {
 
 const Login = async(req,res) => {
     try {
-        const {email , password} = req.body;
-        const existingUser = await userModel.findOne({email})
+        const { email, password } = req.body;
+        if (!email?.trim() || !password) {
+            return res.status(400).json({ success: false, message: "Email and password are required" });
+        }
+        const existingUser = await userModel.findOne({ email: email.trim().toLowerCase() });
         
         if(!existingUser){
-            return res.status(404).json({
-                message:"User not found!"
+            return res.status(401).json({
+                success: false,
+                message:"Invalid email or password"
             });
         }
 
         const isMatch =await  bcryptjs.compare(password,existingUser.password );
         if(!isMatch){
-            return res.status(400).json({
+            return res.status(401).json({
+                success: false,
                 message:"Invalid password or email"
             });
         };
@@ -72,7 +83,9 @@ const Login = async(req,res) => {
 });
 
         res.status(200).json({
-            message:"user login successfull",success:true
+            success: true,
+            message: "Login successful",
+            token,
         });
 
     }    catch(error){

@@ -1,8 +1,7 @@
-import React from 'react';
 import { useState } from 'react';
-import axios from 'axios';
+import api from "../api";
+import { useAuth } from "../authContext.js";
 import { useNavigate } from 'react-router-dom';
-import { socket } from "../socket";
 
 
 function Login() {
@@ -12,6 +11,7 @@ function Login() {
     })
 
     const [error , setError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
     const handleChange = (e) => {
         setFormData((prev) => ({
@@ -19,18 +19,24 @@ function Login() {
         }));
     };
 
-    const url =`${import.meta.env.VITE_API_URL}/api/auth/login`;
     const navigate = useNavigate();
+    const { refreshAuth } = useAuth();
 
     const handleSubmit = async(e) => {
         try{
-             e.preventDefault();
-            await axios.post(url,formData,{withCredentials:true});
-            socket.connect();
-        navigate("/");
+            e.preventDefault();
+            setError("");
+            setSubmitting(true);
+            const response = await api.post("/api/auth/login", formData);
+            if (!response.data.token) throw new Error("The server did not return an authentication token");
+            localStorage.setItem("token", response.data.token);
+            const user = await refreshAuth();
+            if (!user) throw new Error("Login succeeded, but your profile could not be verified. Please try again.");
+            navigate("/", { replace: true });
         }catch (error) {
-            setError(error.response?.data?.message|| "something went wrong ")
-    console.error(error.response?.data || error.message);
+            setError(error.response?.data?.message || error.message || "Unable to log in");
+        } finally {
+            setSubmitting(false);
 }
     }
 
@@ -38,7 +44,7 @@ function Login() {
     return (
     <div className="container mt-5 py-5 justify-content-center ">
    <form onSubmit={handleSubmit}>
-    <h1>{error}</h1>
+    {error && <div className="alert alert-danger" role="alert">{error}</div>}
   <div className="mb-3">
     <label htmlFor="exampleInputEmail1" className="form-label">Email address</label>
     <input type="email" onChange={handleChange} name="email" value={formData.email} className="form-control" id="exampleInputEmail1" aria-describedby="emailHelp"/>
@@ -50,7 +56,7 @@ function Login() {
     <input   type="password" onChange={handleChange} name="password" value={formData.password} className="form-control" id="exampleInputPassword1"/>
   </div>
 
-  <button type="submit" className="btn btn-primary mb-5">Submit</button>
+  <button type="submit" className="btn btn-primary mb-5" disabled={submitting}>{submitting ? "Logging in..." : "Login"}</button>
 </form>
 <button type="button" className="btn btn-secondary" onClick={ ()=> navigate("/")}>Back</button>
     </div>
